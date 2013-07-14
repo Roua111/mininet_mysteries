@@ -2,7 +2,7 @@
 
 from mininet.topo import Topo
 from mininet.net import Mininet
-from mininet.node improt CPULimitedHost
+from mininet.node import CPULimitedHost
 from mininet.link import TCLink
 from mininet.util import irange, dumpNodeConnections
 from mininet.log import setLogLevel
@@ -28,20 +28,20 @@ class LinearTopo(Topo):
                 self.addLink(switch, lastSwitch, bw=10, delay='5ms', loss=1, max_queue_size=1000, use_htb=True)
             lastSwitch = switch
             
-def simpleTest():
-    "Create and test a simple network"
+def perfTest():
+    "Create and test a simple performance test"
     topo = LinearTopo(k=4)
-    net = Mininet(topo)
+    net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
     print "Dmping host connections"
     dumpNodeConnections(net.hosts)
     print "Testing network connectivitiy"
     net.pingAll()
     print "Testing bandwidht between h1 and h4"
-    h1, h4 = newt.get('h1', 'h4')
+    h1, h4 = net.get('h1', 'h4')
     net.iperf((h1,h4))
     net.stop()
     
 if __name__ == '__main__':
     setLogLevel('info')
-    simpleTest()
+    perfTest()
