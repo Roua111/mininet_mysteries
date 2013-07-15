@@ -11,6 +11,8 @@ Teaching Assistant: Muhammad Shahbaz
 
 from mininet.topo import Topo
 from mininet.net import Mininet
+from mininet.link import TCLink
+from mininet.util import irange, dumpNodeConnections
 from mininet.log import setLogLevel
 
 class CustomTopo(Topo):
@@ -24,80 +26,41 @@ class CustomTopo(Topo):
         
         # Add your logic here ...
         
-        self.hosts = []
         self.hostCount = 27
         self.core = 1
         self.edgeCount = 9
-        self.edges = []
         self.aggrCount = 3
-        self.aggrs = []
         self.depth = depth
         self.createNetwork()
         
         
    
-        
-    def createHosts(self):
-        for i in range (self.hostCount):
-            self.hosts.append(self.addHost('h%s' % str(i+1)))
-    
-    def createEdges(self):
-        for i in range (self.edgeCount):
-            self.edges.append(self.addSwitch('e%s' % str(i+1)))
-            
-    def createAggrs(self):
-        for i in range (self.aggrCount):
-            self.aggrs.append(self.addSwitch('a%s' % str(i+1)))
-            
-    
-    
-    def linkHosts(self):
-        for anEdge in self.edges:
-            hostCount = 0
-            for aHost in self.hosts:
-                if hostCount < 3:
-                    self.addLink(aHost, anEdge)
-                else:
-                    break
-                hostCount += 1
+
                 
-    def linkAggregators(self):
+    def createNetwork(self):
         core = self.addSwitch('c1')
-        for anAggr in self.aggrs:
+        edgeIndex = 0
+        hostIndex = 0
+        for aggrIndex in  range(self.aggrCount):
+            anAggr = self.addSwitch('a%s' % str(aggrIndex+1))
             self.addLink(core, anAggr)
-            edgeCount = 0
-            for anEdge in self.edges:
-                if edgeCount < 3:
-                    self.addLink(anAggr, anEdge)
-                else:
+            while edgeIndex < self.edgeCount:
+               
+                anEdge = self.addSwitch('e%s' % str(edgeIndex+1))
+                self.addLink(anEdge, anAggr)
+                while hostIndex < self.hostCount:
+                    aHost = self.addHost('h%s' % str(hostIndex+1))
+                    self.addLink(aHost, anEdge)
+                    hostIndex += 1
+                    if hostIndex % 3 == 0:
+                        break
+
+                edgeIndex += 1
+                if edgeIndex % 3 == 0:
                     break
-                edgeCount += 1
         return core
         
 
-    def createNetwork(self):
-        self.createHosts()    
-        self.createEdges()
-        self.createAggrs()
-        self.linkHosts()
-        return self.linkAggregators()
-        
-        
-    def addTree( self, depth, fanout):
-        isSwitch = depth > 0
-        
-       
-        if isSwitch:
-            print "Depth: " + str(depth)
-            node = self.addSwitch('s%s' % self.edgeNum)
-            self.edgeNum += 1
-            for _ in range (fanout): 
-                child = self.addTree(depth-1, fanout)
-                self.addLink(node, child)
-        else:
-            node = self.addHost('h%s' % self.hostNum)
-            self.hostNum += 1
-        return node
             
 if __name__ == '__main__':
     setLogLevel('info')
