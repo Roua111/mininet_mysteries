@@ -20,7 +20,7 @@ class CustomTopo(Topo):
 
     "linkopts - (1:core, 2:aggregation, 3: edge) parameters"
     "fanout - number of child switch per parent switch"
-    def __init__(self, linkopts1=0, linkopts2=0, linkopts3=0, fanout=3, depth=3, **opts):
+    def __init__(self, linkopts1, linkopts2, linkopts3, fanout=3, depth=3, **opts):
         # Initialize topology and default options
         Topo.__init__(self, **opts)
         
@@ -30,7 +30,9 @@ class CustomTopo(Topo):
         self.core = 1
         self.edgeCount = 9
         self.aggrCount = 3
-        self.depth = depth
+        self.ca = linkopts1
+        self.ae = linkopts2
+        self.eh = linkopts3
         self.createNetwork()
         
         
@@ -43,14 +45,14 @@ class CustomTopo(Topo):
         hostIndex = 0
         for aggrIndex in  range(self.aggrCount):
             anAggr = self.addSwitch('a%s' % str(aggrIndex+1))
-            self.addLink(core, anAggr)
+            self.addLink(core, anAggr, bw=self.ca['bw'], delay=self.ca['delay'])
             while edgeIndex < self.edgeCount:
                
                 anEdge = self.addSwitch('e%s' % str(edgeIndex+1))
-                self.addLink(anEdge, anAggr)
+                self.addLink(anEdge, anAggr, bw=self.ae['bw'], delay=self.ae['delay'])
                 while hostIndex < self.hostCount:
                     aHost = self.addHost('h%s' % str(hostIndex+1))
-                    self.addLink(aHost, anEdge)
+                    self.addLink(aHost, anEdge, bw=self.eh['bw'], delay=self.eh['delay'])
                     hostIndex += 1
                     if hostIndex % 3 == 0:
                         break
@@ -63,9 +65,13 @@ class CustomTopo(Topo):
 
             
 if __name__ == '__main__':
+    linkopts1 = {'bw':50, 'delay':'5ms'}
+    "--- aggregation to edge switches"
+    linkopts2 = {'bw':30, 'delay':'10ms'}
+    "--- edge switches to hosts"
+    linkopts3 = {'bw':10, 'delay':'15ms'}
     setLogLevel('info')
-    topo = CustomTopo()
-    print str(type(topo))
-    network = Mininet(topo)
+    topo = CustomTopo(linkopts1, linkopts2, linkopts3, fanout=3)
+    network = Mininet(topo=topo, link=TCLink)
     network.start()
     network.stop()
